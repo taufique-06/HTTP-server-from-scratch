@@ -1,12 +1,13 @@
 using System.Net.Sockets;
 using System.Text;
+using http_server.Models;
 
 namespace http_server.Steps;
 
 public class SecondStep
 {
     //Step 2: Reading and Parsing the HTTP Request
-    public string Execute(Socket socket)
+    public HttpReqInfo Execute(Socket socket)
     {
         var buffer = new byte[1024];
         var receivedData = socket.Receive(buffer);
@@ -27,6 +28,13 @@ public class SecondStep
         Console.WriteLine(lines[2]);
         Console.WriteLine(lines[1]);
 
-        return reqPath;
+        return new HttpReqInfo
+        {
+            Protocol = protocol,
+            HttpMethod = httpMethod,
+            ReceivedData = buffer,
+            ReceivedDataLength = receivedData,
+            ReqPath = reqPath,
+        };
     }
 }

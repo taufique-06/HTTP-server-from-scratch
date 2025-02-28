@@ -21,10 +21,10 @@ var socket = server.AcceptSocket();
 // Response Body
 
 var secondStep = new SecondStep();
-var path = secondStep.Execute(socket);
+var reqInfo = secondStep.Execute(socket);
 
 var thirdStep = new ThirdStep();
-var response = thirdStep.ReturnResponse(path);
+var response = thirdStep.ReturnResponse(reqInfo.HttpMethod,reqInfo.ReceivedDataLength,reqInfo.ReceivedData,reqInfo.ReqPath);
 
 socket.Send(System.Text.Encoding.UTF8.GetBytes(response));
 socket.Shutdown(SocketShutdown.Both);
