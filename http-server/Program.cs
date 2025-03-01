@@ -13,20 +13,35 @@ Console.WriteLine("Staring application");
 // So when a client connects to my server, it connects to my IP and port && server creates a new socket for that connection, allowing the client to communicate
 TcpListener server = new TcpListener(IPAddress.Any, 4221);
 server.Start();
-var socket = server.AcceptSocket();
 
 //HTTP Response is made up of 3 parts
 // Status Line
 // Headers
 // Response Body
 
-var secondStep = new SecondStep();
-var reqInfo = secondStep.Execute(socket);
+while (true)
+{
+    try
+    {
+        var socket = server.AcceptSocket();
+        Console.WriteLine("Client connected.");
 
-var thirdStep = new ThirdStep();
-var response = thirdStep.ReturnResponse(reqInfo.HttpMethod,reqInfo.ReceivedDataLength,reqInfo.ReceivedData,reqInfo.ReqPath);
+        var secondStep = new SecondStep();
+        var reqInfo = secondStep.ReturnReqInfo(socket);
 
-socket.Send(System.Text.Encoding.UTF8.GetBytes(response));
-socket.Shutdown(SocketShutdown.Both);
-socket.Close();
+        var thirdStep = new ThirdStep();
+        var response = thirdStep.ReturnResponse(reqInfo.HttpMethod, reqInfo.ReceivedDataLength, reqInfo.ReceivedData,
+            reqInfo.ReqPath);
+
+        socket.Send(System.Text.Encoding.UTF8.GetBytes(response));
+        socket.Shutdown(SocketShutdown.Both);
+        socket.Close();
+    }
+    catch (Exception e)
+    {
+        Console.WriteLine("Error: " + e.Message);
+    }
+}
+
+
 

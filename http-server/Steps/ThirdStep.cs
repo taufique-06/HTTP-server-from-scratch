@@ -1,5 +1,6 @@
 using System.Net;
 using System.Text;
+using http_server.Responses;
 
 namespace http_server.Steps;
 
@@ -16,76 +17,88 @@ public class ThirdStep
 
     public string ReturnResponse(string method, int receivedBytes, byte[] buffer, string path)
     {
-        var responseContent = "";
-
-        if (method.Equals(Get, StringComparison.OrdinalIgnoreCase))
+        CreateResponses createResponses = new CreateResponses();
+        try
         {
-            if (path.Equals("/"))
+
+            var responseContent = "";
+
+            if (method.Equals(Get, StringComparison.OrdinalIgnoreCase))
             {
-                responseContent = "Helloo World!";
-            }
-            else if (path.StartsWith("/contact"))
-            {
-                responseContent = "You can contact Taufique by emailing him";
-            }
-            else if (path.StartsWith("/search"))
-            {
-                //Query Parameter exists
-                var queries = ParseQueryParams(path);
-                
-                var query = queries.ContainsKey("query") && queries["query"].Count > 0 
-                    ? string.Join(", ", queries["query"])
-                    : "No query parameter found.";
-                
-                var page = queries.ContainsKey("page") && queries["page"].Count > 0 
-                    ? string.Join(", ", queries["page"]) 
-                    : "1";
-                
-                responseContent = $"GET: Search results for '{query}' (Page {page})";
-            }
-            else if (path.StartsWith("/json"))
-            {
-                var response = new
+                if (path.Equals("/"))
                 {
-                    message = "Hello World",
-                    status = HttpStatusCode.OK,
-                    data = new
+                    responseContent = "Helloo World!";
+                }
+                else if (path.StartsWith("/contact"))
+                {
+                    responseContent = "You can contact Taufique by emailing him";
+                }
+                else if (path.StartsWith("/search"))
+                {
+                    //Query Parameter exists
+                    var queries = ParseQueryParams(path);
+
+                    var query = queries.ContainsKey("query") && queries["query"].Count > 0
+                        ? string.Join(", ", queries["query"])
+                        : "No query parameter found.";
+
+                    var page = queries.ContainsKey("page") && queries["page"].Count > 0
+                        ? string.Join(", ", queries["page"])
+                        : "1";
+
+                    responseContent = $"GET: Search results for '{query}' (Page {page})";
+                }
+                else if (path.StartsWith("/json"))
+                {
+                    var response = new
                     {
-                        name = "Taufique"
+                        message = "Hello World",
+                        status = HttpStatusCode.OK,
+                        data = new
+                        {
+                            name = "Taufique"
+                        }
+                    };
+
+                    return createResponses.CreateJsonResponse(200, response);
+                }
+                else
+                {
+                    return createResponses.CreateErrorResponse(404, "Not Found");
+                }
+            }
+            else if (method.Equals(Post, StringComparison.OrdinalIgnoreCase))
+            {
+                if (path.StartsWith("/submit"))
+                {
+                    var data = "";
+                    if (receivedBytes > 0)
+                    {
+                        data = Encoding.UTF8.GetString(buffer, 0, receivedBytes);
                     }
-                };
-                
-                responseContent = System.Text.Json.JsonSerializer.Serialize(response);
+
+                    responseContent = "POST: Data received: " + data;
+                }
+                else
+                {
+                    return createResponses.CreateErrorResponse(404,
+                        "Not Found");
+                }
             }
             else
             {
-                responseContent = "404 - Path Not Found";
+                return createResponses.CreateErrorResponse(405,
+                    "Other Method is not allowed at the moment. Work in Progress");
             }
-        }
-        else if (method.Equals(Post, StringComparison.OrdinalIgnoreCase))
-        {
-            if (method.Equals(Post, StringComparison.OrdinalIgnoreCase))
-            {
-                string data = "";
-                if (receivedBytes > 0)
-                {
-                    data = Encoding.UTF8.GetString(buffer, 0, receivedBytes);
-                }
-                
-                responseContent = "POST: Data received: " + data;
-            }
-        }
-        else
-        {
-            responseContent = "Other Method is not allowed at the moment. Work in Progress";
-        }
 
-        return
-            "HTTP/1.1 200 OK\r\n" +
-            "Content-Type: text/plain; charset=UTF-8\r\n" +
-            "Content-Length: " + responseContent.Length + "\r\n" +
-            "\r\n" +
-            responseContent;
+            return
+                createResponses.DefaultResponse(responseContent);
+        }
+        catch (Exception e)
+        {
+            Console.WriteLine("Internal Server Error: " + e.Message);
+            return createResponses.CreateErrorResponse(500, "Internal Server Error");
+        }
     }
 
     private Dictionary<string, List<string>> ParseQueryParams(string url)
@@ -108,6 +121,7 @@ public class ThirdStep
                     {
                         queryParams[keyValue[0]] = new List<string>();
                     }
+
                     queryParams[keyValue[0]].Add(keyValue[1]);
                 }
             }
@@ -115,12 +129,12 @@ public class ThirdStep
 
         return queryParams;
     }
-    
+
     static Dictionary<string, string> ParseFormData(string body)
     {
         var formData = new Dictionary<string, string>();
         string[] parameters = body.Split('&');
-        
+
         foreach (var param in parameters)
         {
             var keyValue = param.Split('=');
