@@ -1,3 +1,4 @@
+using System.Net;
 using System.Text;
 
 namespace http_server.Steps;
@@ -41,6 +42,20 @@ public class ThirdStep
                     : "1";
                 
                 responseContent = $"GET: Search results for '{query}' (Page {page})";
+            }
+            else if (path.StartsWith("/json"))
+            {
+                var response = new
+                {
+                    message = "Hello World",
+                    status = HttpStatusCode.OK,
+                    data = new
+                    {
+                        name = "Taufique"
+                    }
+                };
+                
+                responseContent = System.Text.Json.JsonSerializer.Serialize(response);
             }
             else
             {
