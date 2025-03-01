@@ -56,7 +56,7 @@ public class ThirdStep
                 {
                     data = Encoding.UTF8.GetString(buffer, 0, receivedBytes);
                 }
-
+                
                 responseContent = "POST: Data received: " + data;
             }
         }
@@ -99,5 +99,22 @@ public class ThirdStep
         }
 
         return queryParams;
+    }
+    
+    static Dictionary<string, string> ParseFormData(string body)
+    {
+        var formData = new Dictionary<string, string>();
+        string[] parameters = body.Split('&');
+        
+        foreach (var param in parameters)
+        {
+            var keyValue = param.Split('=');
+            if (keyValue.Length == 2)
+            {
+                formData[Uri.UnescapeDataString(keyValue[0])] = Uri.UnescapeDataString(keyValue[1]);
+            }
+        }
+
+        return formData;
     }
 }
