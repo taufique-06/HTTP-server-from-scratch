@@ -18,20 +18,18 @@ public class ThirdStep
     public string ReturnResponse(string method, int receivedBytes, byte[] buffer, string path)
     {
         CreateResponses createResponses = new CreateResponses();
+        RegisterRoutes registerRoutes = new RegisterRoutes();
+        
         try
         {
-
+            var routes = registerRoutes.Routes();
             var responseContent = "";
 
             if (method.Equals(Get, StringComparison.OrdinalIgnoreCase))
             {
-                if (path.Equals("/"))
+                if (routes.ContainsKey(path))
                 {
-                    responseContent = "Helloo World!";
-                }
-                else if (path.StartsWith("/contact"))
-                {
-                    responseContent = "You can contact Taufique by emailing him";
+                    return routes[path]();
                 }
                 else if (path.StartsWith("/search"))
                 {
@@ -47,20 +45,6 @@ public class ThirdStep
                         : "1";
 
                     responseContent = $"GET: Search results for '{query}' (Page {page})";
-                }
-                else if (path.StartsWith("/json"))
-                {
-                    var response = new
-                    {
-                        message = "Hello World",
-                        status = HttpStatusCode.OK,
-                        data = new
-                        {
-                            name = "Taufique"
-                        }
-                    };
-
-                    return createResponses.CreateJsonResponse(200, response);
                 }
                 else
                 {
